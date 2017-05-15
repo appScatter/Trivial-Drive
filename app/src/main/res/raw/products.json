@@ -1,0 +1,58 @@
+{
+  // the hashkey used to validate this purchase.
+  "hash": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA9OkAeu/9lvQPNOKB/JfiW/OwYyZwMeOxfhNpPhz6HpDHpzzYvzu0xFMDgIMl7RDSt5PhfDQOZ7QIym0TRML9uB3j93Vo6z02dn9LYCDZ02tmPi7iIDkWsPDYSJOO975XJsqxpIC5Ysrmq5Wo75mb5DJoGyVFDYi4CE2Fy6WgPJ+9dcx4NiJT5CeiAaG7P9u+dE9HTEF0zgLYIOm1QptY8gWbgSKPlBr32fn/NsQ2cxGD1BKMtvPHXIOKyIdWYZhIoLq+HlmEqAibMxYwzIekK64fTcPs9HkFTlhiu1NPCQYngnRZf3BbcSOwQrq43EvnWir+QyPH2s48V1c68sxovQIDAQAB",
+  "provided_id" : "",                            //some providers need a specific id to identify the account.
+  "products" : [                                 //the products available on this store
+    {
+      "global_id" : "sku_gas",                   //the id that is used on the software that will match the providers id
+      "id": "sku_gas",  						 // id: the same format as Google SKU, required;
+      "title" : "1/4 of gas tank",  			 //default title, required
+      "description" : "Some gas to go further",  //default description, required
+      "price" : 1.00,  						     //default price, required
+      "type" : 0,                                // 0 - Consumable; 1 - Entitlement; 2 - Subscription
+      "token" : "",                              // some providers need to have a token per product, like Fortumo
+      "localization" : [  //not required,
+        {
+          "country" : "RU",
+          "locale" : "ru_RU",
+          "title" : "Четверть бака бензина",
+          "description" : "Немного топлива, чтобы проехать еще",
+          "price" : 10.00
+        },
+        {
+          "country" : "PT",
+          "locale" : "pt_PT",
+          "title" : "encher 1/4 do tanque",
+          "description" : "Combustivel para seguir",
+          "price" : 0.80
+        }
+      ]
+    },
+    {
+      "global_id" : "sku_premium",
+      "id": "sku_premium",
+      "title" : "Premium upgrade",
+      "description" : "Cool red skin for your car",
+      "price" : 1.00,
+      "type" : 1,
+      "token" : "",
+      "localization" : [  //not required,
+        {
+          "country" : "RU",
+          "locale" : "ru_RU",
+          "title" : "Premium upgrade",
+          "description" : "Класный красный цвет для вашей машины",
+          "price" : 10.00
+        },
+        {
+          "country" : "PT",
+          "locale" : "pt_PT",
+          "title" : "Premium upgrade",
+          "description" : "Um pintura vermelha para o carro",
+          "price" : 0.80
+        }
+      ]
+    }
+  ]
+
+}

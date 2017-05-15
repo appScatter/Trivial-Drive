@@ -1,0 +1,85 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion "25.0.2"
+    defaultConfig {
+        applicationId "com.appscatter.trivialdrive"
+        minSdkVersion 17
+        targetSdkVersion 25
+        versionCode 7
+        versionName "1.0.14"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            debuggable true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    signingConfigs {
+        releaseConfig {
+            storeFile file("../keys/trivial.keystore.jks")
+            storePassword "appscatter123"
+            keyAlias "trivial"
+            keyPassword "123appscatter"
+        }
+    }
+
+    productFlavors {
+        trivialdrive {
+
+        }
+        slideme {
+            applicationId = "com.appscatter.hamburgerscatter"
+        }
+    }
+}
+
+dependencies {
+    // Amazon IAB SDK should be imported as a lib
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.android.support:recyclerview-v7:25.3.1'
+
+    // ASIab
+    compile 'com.appscatter.iab:core:0.4.+@aar'
+    compile('com.appscatter.iab:utils:0.4.+@aar') {
+        transitive = true
+    }
+
+    // ASIab Google
+    compile 'com.appscatter.iab:google:0.4.+@aar'
+
+    // ASIab Amazon
+    compile 'com.appscatter.iab:amazon:0.4.+@aar'
+//    compile 'com.amazon:in-app-purchasing:2.0.61'
+
+    // ASIab Samsung
+    compile 'com.appscatter.iab:samsung:0.4.+@aar'
+
+    // ASIab OpenStore
+    compile 'com.appscatter.iab:openstore:0.4.+@aar'
+
+    // ASIab Fortumo
+    compile 'com.appscatter.iab:fortumo:0.4.+@aar'
+
+    // ASIab Aptoide
+    compile 'com.appscatter.iab:aptoide:0.4.+@aar'
+
+    // ASIab SlideMe
+    compile 'com.appscatter.iab:slideme:0.4.+@aar'
+
+    // UI - DragSortAdapter
+    compile 'com.makeramen:dragsortadapter:1.3.0'
+    // Leak Canary
+    debugCompile 'com.squareup.leakcanary:leakcanary-android:1.3.1'
+    releaseCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.3.1'
+    testCompile 'junit:junit:4.12'
+}

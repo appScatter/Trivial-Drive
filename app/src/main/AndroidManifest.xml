@@ -1,0 +1,39 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools"
+          package="com.appscatter.trivialdrive">
+
+    <uses-permission
+            android:name="android.permission.GET_ACCOUNTS"
+            tools:node="remove"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <application
+            android:name="com.appscatter.trivialdrive.TrivialApplication"
+            android:allowBackup="true"
+            android:label="@string/app_name"
+            android:icon="@mipmap/ic_launcher"
+            android:supportsRtl="true"
+            android:theme="@style/AppTheme">
+
+        <activity
+                android:name="com.appscatter.trivialdrive.ui.activity.LauncherActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <activity
+                android:name="com.appscatter.trivialdrive.ui.activity.AdvancedHelperActivity"/>
+
+        <activity
+                android:name="com.appscatter.trivialdrive.ui.activity.ActivityHelperActivity"/>
+
+        <activity
+                android:name="com.appscatter.trivialdrive.ui.activity.FragmentHelperActivity"/>
+
+
+    </application>
+
+</manifest>
