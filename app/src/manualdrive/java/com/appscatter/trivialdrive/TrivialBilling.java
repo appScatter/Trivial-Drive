@@ -1,49 +1,29 @@
 package com.appscatter.trivialdrive;
 
-import com.appscatter.iab.core.model.billing.Purchase;
-import com.appscatter.iab.core.model.billing.SkuDetails;
-import com.appscatter.iab.core.model.event.billing.InventoryResponse;
-import com.appscatter.iab.core.model.event.billing.PurchaseResponse;
-import com.appscatter.iab.core.model.event.billing.SkuDetailsResponse;
-import com.appscatter.iab.core.verification.VerificationResult;
+import com.appscatter.iab.core.billing.BillingProvider;
+import com.appscatter.iab.core.model.Configuration;
+import com.appscatter.iab.core.model.billing.SkuType;
+import com.appscatter.iab.core.sku.MapSkuResolver;
+import com.appscatter.iab.core.sku.TypedMapSkuResolver;
+import com.appscatter.iab.core.verification.SimplePublicKeyPurchaseVerifier;
 import com.appscatter.iab.stores.amazon.AmazonBillingProvider;
 import com.appscatter.iab.stores.aptoide.AptoideBillingProvider;
 import com.appscatter.iab.stores.fortumo.FortumoBillingProvider;
-import com.appscatter.iab.stores.fortumo.FortumoMapedSkuResolver;
+import com.appscatter.iab.stores.fortumo.FortumoMappedSkuResolver;
 import com.appscatter.iab.stores.fortumo.model.FortumoSkuDetails;
 import com.appscatter.iab.stores.google.GoogleBillingProvider;
 import com.appscatter.iab.stores.openstore.providers.ApplandBillingProvider;
 import com.appscatter.iab.stores.openstore.providers.OpenStoreBillingProvider;
+import com.appscatter.iab.stores.openstore.providers.SlideMEBillingProvider;
 import com.appscatter.iab.stores.samsung.BillingMode;
 import com.appscatter.iab.stores.samsung.SamsungBillingProvider;
 import com.appscatter.iab.stores.samsung.SamsungMapSkuResolver;
 import com.appscatter.iab.stores.samsung.SamsungPurchaseVerifier;
-import com.appscatter.iab.stores.slideme.SlideMeBillingProvider;
 import com.appscatter.iab.utils.permissions.ASPermissionsConfig;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import android.app.Activity;
 import android.content.Context;
-import android.content.SharedPreferences;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
-public final class TrivialBilling {
-
-    private static final String NAME = "billing";
-
-    private static final String KEY_FIRST_LAUNCH = "first_launch";
-    private static final String KEY_HELPER = "helper";
-    private static final String KEY_PROVIDERS = "providers";
-    private static final String KEY_AUTO_RECOVER = "auto_recover";
+public final class TrivialBilling extends BaseTrivialBilling {
 
     private static final String AMAZON_SKU_GAS = "com.appscatter.trivialdrive.sku_gas";
     private static final String AMAZON_SKU_PREMIUM = "com.appscatter.trivialdrive.sku_premium";
@@ -96,15 +76,9 @@ public final class TrivialBilling {
             "lAMikubM6IeejTLLjPR5P5E0cQRb5cOncak3tTLCMb0QASZC5Kb/68dyYiRWjoG6" +
             "NbSVRhmpjCCI/4hY3QIDAQAB";
 
-    public static final String SLIDEME_GAS = "sku_hamburger";
-    public static final String SLIDEME_PREMIUM = "sku_gourmethamburger";
+    public static final String SLIDEME_GAS = "slideme.sku_gas";
+    public static final String SLIDEME_PREMIUM = "slideme.sku_premium";
     public static final String SLIDEME_SUBSCRIPTION = "slideme.sku_infinite_gas";
-    public static final String SLIDEME_PUBLIC_KEY
-            = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyuVYkCeiQQuFpNYND1jUaNP8WOSxZc172VzYHqEa"
-            + "kCfSupMIhVQeAM7xkTZ6lZiBMwagw58wHxpbO65+6h3sKuiTGP+2Ax2wclinVgwNiLQbdl8RdZtf3aJIx/dr"
-            + "+gIK+QsbqCfSxBrT/8qnWeSS1JcJlTbYmqCvBtiT4n3ZjpL2TYTGDlGXBoqzKpVwQguTk6Cikg4cCsLB++Hz"
-            + "aupAhN+WcurjTV4jighy6KQsIQSP8+sdLHHAPK2+cOZ5py6cL55GAVu2cpkTsnWoEr5wseMTRwZqDePBN77P"
-            + "DVdwjyOT5INvXd3/AHrT4B1WEHCnrjfCqIaGIxJrzNK2OvqKwwIDAQAB";
 
     private static final String FORTUMO_GAS_TITLE = "sku_gas";
     private static final String FORTUMO_GAS_SERVICEID = "61d3a1a88bdd651fe73f833bc2edeef5";
@@ -122,16 +96,7 @@ public final class TrivialBilling {
     public static final String SKU_PREMIUM = "sku_premium";
     public static final String SKU_SUBSCRIPTION = "sku_subscription";
 
-    private static Context context;
-    private static SharedPreferences preferences;
-
-    // It's probably a good idea to store this values in a more secure way instead of boolean
-    // Maybe some bits in int\long
-    private static boolean premium;
-    private static boolean subscription;
-    private static final Map<String, SkuDetails> DETAILS = new HashMap<>();
-
-    private static BillingProvider newProvider(final Provider provider, Context context) {
+    private static BillingProvider newProvider(final Provider provider) {
         switch (provider) {
             case AMAZON:
                 return newAmazonProvider();
@@ -146,7 +111,7 @@ public final class TrivialBilling {
             case APTOIDE:
                 return newAptoideProvider();
             case SLIDEME:
-                return newSlideMEProvider(context);
+                return newSlideMEProvider();
             case OPENSTORE:
                 return newOpenStoreProvider();
             case FORTUMO:
@@ -155,6 +120,7 @@ public final class TrivialBilling {
                 throw new IllegalStateException();
         }
     }
+
 
     private static BillingProvider newGoogleProvider() {
         final TypedMapSkuResolver skuResolver = new TypedMapSkuResolver();
@@ -221,7 +187,7 @@ public final class TrivialBilling {
         final TypedMapSkuResolver skuResolver = new TypedMapSkuResolver();
         skuResolver.add(SKU_GAS, APPLAND_GAS, SkuType.CONSUMABLE);
         skuResolver.add(SKU_PREMIUM, APPLAND_PREMIUM, SkuType.ENTITLEMENT);
-        skuResolver.add(SKU_SUBSCRIPTION, APPLAND_SUBSCRIPTION, SkuType.SUBSCRIPTION);
+//        skuResolver.add(SKU_SUBSCRIPTION, APPLAND_SUBSCRIPTION, SkuType.SUBSCRIPTION);
 
         return new ApplandBillingProvider.Builder(context)
                 .setPurchaseVerifier(new SimplePublicKeyPurchaseVerifier(APPLAND_PUBLIC_KEY))
@@ -229,26 +195,20 @@ public final class TrivialBilling {
                 .build();
     }
 
-    private static BillingProvider newSlideMEProvider(Context context) {
+    private static BillingProvider newSlideMEProvider() {
         final TypedMapSkuResolver skuResolver = new TypedMapSkuResolver();
         skuResolver.add(SKU_GAS, SLIDEME_GAS, SkuType.CONSUMABLE);
         skuResolver.add(SKU_PREMIUM, SLIDEME_PREMIUM, SkuType.ENTITLEMENT);
         skuResolver.add(SKU_SUBSCRIPTION, SLIDEME_SUBSCRIPTION, SkuType.SUBSCRIPTION);
 
-        if (context instanceof Activity) {
-            Activity activity = (Activity)context;
-            return new SlideMeBillingProvider.Builder(TrivialBilling.context, activity)
-                    .setPurchaseVerifier(new SimplePublicKeyPurchaseVerifier(SLIDEME_PUBLIC_KEY))
-                    .setSkuResolver(skuResolver)
-                    .build();
-        } else {
-            return null;
-        }
+        return new SlideMEBillingProvider.Builder(context)
+                .setSkuResolver(skuResolver)
+                .build();
     }
 
     private static BillingProvider newOpenStoreProvider() {
         final TypedMapSkuResolver skuResolver = new TypedMapSkuResolver();
-        //         skuResolver.add(SKU_GAS, YANDEX_SKU_GAS, SkuType.CONSUMABLE);
+        //        skuResolver.add(SKU_GAS, YANDEX_SKU_GAS, SkuType.CONSUMABLE);
         //        skuResolver.add(SKU_PREMIUM, YANDEX_SKU_PREMIUM, SkuType.ENTITLEMENT);
         //        skuResolver.add(SKU_SUBSCRIPTION, YANDEX_SKU_SUBSCRIPTION, SkuType.SUBSCRIPTION);
 
@@ -258,7 +218,7 @@ public final class TrivialBilling {
     }
 
     private static BillingProvider newFortumoProvider() {
-        final FortumoMapedSkuResolver skuResolver = new FortumoMapedSkuResolver();
+        final FortumoMappedSkuResolver skuResolver = new FortumoMappedSkuResolver();
 
         FortumoSkuDetails prodGas = new FortumoSkuDetails.Builder()
                 .setTitle(FORTUMO_GAS_TITLE)
@@ -274,6 +234,7 @@ public final class TrivialBilling {
                 .setItemType(SkuType.ENTITLEMENT)
                 .build();
 
+
         skuResolver.add(SKU_GAS, prodGas);
         skuResolver.add(SKU_PREMIUM, prodPremium);
 //        skuResolver.add(SKU_SUBSCRIPTION, AMAZON_SKU_SUBSCRIPTION);
@@ -283,31 +244,16 @@ public final class TrivialBilling {
                 .build();
     }
 
+
     private TrivialBilling() {
         throw new UnsupportedOperationException();
-    }
-
-    public static void init(final Context context) {
-        TrivialBilling.context = context.getApplicationContext();
-        preferences = context.getSharedPreferences(NAME, Context.MODE_PRIVATE);
-
-        if (preferences.getBoolean(KEY_FIRST_LAUNCH, true)) {
-            preferences.edit().putBoolean(KEY_FIRST_LAUNCH, false).apply();
-            setHelper(Helper.ACTIVITY);
-            setProviders(Arrays.asList(Provider.values()));
-            setAutoRecover(true);
-            TrivialData.resetGas();
-        }
     }
 
     public static Configuration getRelevantConfiguration(final Context context) {
         final Configuration.Builder builder = new Configuration.Builder();
         builder.setBillingListener(new TrivialBillingListener(context));
         for (final Provider provider : getProviders()) {
-            BillingProvider billingProvider = newProvider(provider, context);
-            if (billingProvider != null) {
-                builder.addBillingProvider(billingProvider);
-            }
+            builder.addBillingProvider(newProvider(provider));
         }
         builder.setAutoRecover(preferences.getBoolean(KEY_AUTO_RECOVER, false));
         builder.setPermissionsConfig(new ASPermissionsConfig.Builder().build());
@@ -321,128 +267,5 @@ public final class TrivialBilling {
         builder.setAutoRecover(preferences.getBoolean(KEY_AUTO_RECOVER, false));
         builder.setPermissionsConfig(new ASPermissionsConfig.Builder().build());
         return builder.build();
-    }
-
-    public static Helper getHelper() {
-        return Helper.valueOf(preferences.getString(KEY_HELPER, null));
-    }
-
-    public static void setHelper(final Helper helper) {
-        preferences.edit().putString(KEY_HELPER, helper.name()).apply();
-    }
-
-    public static Collection<Provider> getProviders() {
-        try {
-            final JSONObject jsonObject = new JSONObject(preferences.getString(KEY_PROVIDERS, ""));
-            final JSONArray jsonArray = jsonObject.getJSONArray(KEY_PROVIDERS);
-            final Collection<Provider> providers = new ArrayList<>(jsonArray.length());
-            for (int i = 0; i < jsonArray.length(); i++) {
-                providers.add(Provider.valueOf(jsonArray.getString(i)));
-            }
-            return providers;
-        } catch (JSONException e) {
-            return Collections.emptyList();
-        }
-    }
-
-    public static void setProviders(final Iterable<Provider> providers) {
-        final JSONObject jsonObject = new JSONObject();
-        final JSONArray jsonArray = new JSONArray();
-        for (final Provider provider : providers) {
-            jsonArray.put(provider.name());
-        }
-        try {
-            jsonObject.put(KEY_PROVIDERS, jsonArray);
-            preferences.edit().putString(KEY_PROVIDERS, jsonObject.toString()).apply();
-        } catch (JSONException ignore) {
-        }
-    }
-
-    public static boolean isAutoRecover() {
-        if (!preferences.contains(KEY_AUTO_RECOVER)) {
-            throw new IllegalStateException();
-        }
-        return preferences.getBoolean(KEY_AUTO_RECOVER, false);
-    }
-
-    public static void setAutoRecover(final boolean autoRecover) {
-        preferences.edit().putBoolean(KEY_AUTO_RECOVER, autoRecover).apply();
-    }
-
-    public static void updateSetup() {
-        // clear all data if we change billing provider
-        premium = false;
-        subscription = false;
-        DETAILS.clear();
-    }
-
-    private static Purchase getPurchase(final Map<Purchase, Integer> inventory,
-            final String sku) {
-        for (final Map.Entry<Purchase, Integer> entry : inventory.entrySet()) {
-            @VerificationResult final int verificationResult = entry.getValue();
-            if (verificationResult == VerificationResult.SUCCESS) {
-                final Purchase purchase = entry.getKey();
-                if (sku.equals(purchase.getSku())) {
-                    return purchase;
-                }
-            }
-        }
-        return null;
-    }
-
-    public static void updateInventory(final InventoryResponse inventoryResponse) {
-        final Map<Purchase, Integer> inventory = inventoryResponse.getInventory();
-        if (!inventoryResponse.isSuccessful()) {
-            // Leave current values intact if request failed
-            return;
-        }
-        if (getPurchase(inventory, SKU_PREMIUM) != null) {
-            premium = true;
-        }
-        final Purchase purchase = getPurchase(inventory, SKU_SUBSCRIPTION);
-        if (purchase != null && !purchase.isCanceled()) {
-            subscription = true;
-        }
-    }
-
-    public static void updatePurchase(final PurchaseResponse purchaseResponse) {
-        final Purchase purchase = purchaseResponse.getPurchase();
-        if (!purchaseResponse.isSuccessful()) {
-            // Leave current values intact if request failed
-            return;
-        }
-        //noinspection ConstantConditions
-        final String sku = purchase.getSku();
-        if (SKU_PREMIUM.equals(sku)) {
-            premium = true;
-        } else if (SKU_SUBSCRIPTION.equals(sku)) {
-            subscription = !purchase.isCanceled();
-        }
-    }
-
-    public static void updateSkuDetails(final SkuDetailsResponse skuDetailsResponse) {
-        final Collection<SkuDetails> skusDetails = skuDetailsResponse.getSkusDetails();
-        if (!skuDetailsResponse.isSuccessful()) {
-            // Leave current values intact if request failed
-            return;
-        }
-        for (final SkuDetails skuDetails : skusDetails) {
-            final String sku = skuDetails.getSku();
-            if (!skuDetails.isEmpty()) {
-                DETAILS.put(sku, skuDetails);
-            }
-        }
-    }
-
-    public static boolean hasPremium() {
-        return premium;
-    }
-
-    public static boolean hasValidSubscription() {
-        return subscription;
-    }
-
-    public static SkuDetails getDetails(final String sku) {
-        return DETAILS.get(sku);
     }
 }

@@ -11,9 +11,7 @@ import com.appscatter.trivialdrive.OnProviderPickerListener;
 import com.appscatter.trivialdrive.Provider;
 import com.appscatter.trivialdrive.R;
 import com.appscatter.trivialdrive.TrivialBilling;
-import com.appscatter.trivialdrive.TrivialBillingListener;
 import com.appscatter.trivialdrive.ui.fragment.ProviderPickerDialogFragment;
-import com.appscatter.trivialdrive.ui.view.TrivialView;
 import com.makeramen.dragsortadapter.DragSortAdapter;
 import com.makeramen.dragsortadapter.DragSortShadowBuilder;
 
@@ -51,7 +49,7 @@ import java.util.List;
 import static android.view.View.INVISIBLE;
 import static android.view.View.VISIBLE;
 
-abstract class TrivialActivity extends AppCompatActivity
+public abstract class BaseTrivialActivity extends AppCompatActivity
         implements OnProviderPickerListener {
 
     private static final String FRAGMENT_PROVIDER_PICKER = "provider_picker";
@@ -63,7 +61,7 @@ abstract class TrivialActivity extends AppCompatActivity
     private DrawerLayout drawerLayout;
     private ActionBarDrawerToggle drawerToggle;
     private RecyclerView recyclerView;
-    private Adapter adapter;
+    private BaseTrivialActivity.Adapter adapter;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -99,7 +97,7 @@ abstract class TrivialActivity extends AppCompatActivity
         drawerLayout.addDrawerListener(drawerToggle);
 
         recyclerView = (RecyclerView) findViewById(R.id.recycler);
-        adapter = new Adapter(recyclerView);
+        adapter = new BaseTrivialActivity.Adapter(recyclerView);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
     }
@@ -128,6 +126,9 @@ abstract class TrivialActivity extends AppCompatActivity
     public void onProviderPicked(final Provider provider) {
         adapter.addItem(provider);
     }
+
+    protected abstract void onFortumoButtonClicked(HeaderViewHolder headerViewHolder);
+    protected abstract void onInitButtonClicked(HeaderViewHolder headerViewHolder);
 
     private class Adapter extends DragSortAdapter<DragSortAdapter.ViewHolder> {
 
@@ -176,22 +177,22 @@ abstract class TrivialActivity extends AppCompatActivity
             switch (viewType) {
                 case TYPE_HEADER:
                     view = inflater.inflate(R.layout.item_drawer_header, parent, false);
-                    return new HeaderViewHolder(this, view);
+                    return new BaseTrivialActivity.HeaderViewHolder(this, view);
                 case TYPE_FOOTER:
                     view = inflater.inflate(R.layout.item_drawer_footer, parent, false);
-                    return new FooterViewHolder(this, view);
+                    return new BaseTrivialActivity.FooterViewHolder(this, view);
                 case TYPE_ITEM:
                     view = inflater.inflate(R.layout.item_drawer, parent, false);
-                    return new ItemViewHolder(this, view);
+                    return new BaseTrivialActivity.ItemViewHolder(this, view);
                 default:
                     throw new IllegalStateException();
             }
         }
 
         @Override
-        public void onBindViewHolder(final DragSortAdapter.ViewHolder holder, final int position) {
+        public void onBindViewHolder(final ViewHolder holder, final int position) {
             if (getItemViewType(position) == TYPE_ITEM) {
-                final ItemViewHolder viewHolder = (ItemViewHolder) holder;
+                final BaseTrivialActivity.ItemViewHolder viewHolder = (BaseTrivialActivity.ItemViewHolder) holder;
                 final Provider provider = items.get(position - headerCount);
                 viewHolder.setProvider(provider);
                 final boolean isDragged = getDraggingId() == getItemId(position);
@@ -250,7 +251,7 @@ abstract class TrivialActivity extends AppCompatActivity
         }
     }
 
-    private class HeaderViewHolder extends DragSortAdapter.ViewHolder
+    protected class HeaderViewHolder extends DragSortAdapter.ViewHolder
             implements View.OnClickListener, OnSetupListener, AdapterView.OnItemSelectedListener {
 
         private final Spinner spinHelper;
@@ -273,7 +274,7 @@ abstract class TrivialActivity extends AppCompatActivity
             btnSetup = (Button) itemView.findViewById(R.id.btn_setup);
             ctvAutoRecover = (CheckedTextView) itemView.findViewById(R.id.ctv_auto_recover);
 
-            final HelpersAdapter adapter = new HelpersAdapter();
+            final BaseTrivialActivity.HelpersAdapter adapter = new BaseTrivialActivity.HelpersAdapter();
             spinHelper.setAdapter(adapter);
             spinHelper.setSelection(adapter.getPosition(TrivialBilling.getHelper()));
             spinHelper.setOnItemSelectedListener(this);
@@ -288,7 +289,7 @@ abstract class TrivialActivity extends AppCompatActivity
         }
 
 
-        private void setSetupResponse(final SetupResponse setupResponse) {
+        protected void setSetupResponse(final SetupResponse setupResponse) {
             pbSetup.setVisibility(INVISIBLE);
             tvSetupProvider.setVisibility(VISIBLE);
             final boolean setupSuccessful = setupResponse != null && setupResponse.isSuccessful();
@@ -312,7 +313,7 @@ abstract class TrivialActivity extends AppCompatActivity
             final Helper helper = (Helper) parent.getItemAtPosition(position);
             if (helper != TrivialBilling.getHelper()) {
                 TrivialBilling.setHelper(helper);
-                startActivity(new Intent(TrivialActivity.this, LauncherActivity.class));
+                startActivity(new Intent(BaseTrivialActivity.this, LauncherActivity.class));
                 finish();
             }
         }
@@ -323,30 +324,11 @@ abstract class TrivialActivity extends AppCompatActivity
         @Override
         public void onClick(final View v) {
             if (v == btnFortumo) {
-                //to select fortumo as a paym,ent provider
-                final TrivialActivity context = TrivialActivity.this;
-                ASIab.init(getApplication(), TrivialBilling.getFortumoConfiguration(context));
-                setSetupResponse(null);
-                // strictly for demo purposes
-                TrivialBilling.updateSetup();
-                final TrivialView trivialView = (TrivialView) findViewById(R.id.trivial);
-                trivialView.updatePremium();
-                trivialView.updateSubscription();
-                trivialView.updateSkuDetails();
-
-                ASIab.setup();
+                onFortumoButtonClicked(this);
 
             } else if (v == btnInit) {
-                final TrivialActivity context = TrivialActivity.this;
-//                ASIab.init(getApplication(), TrivialBilling.getRelevantConfiguration(context));
-                ASIab.init("test@appscatter.com", getApplication(), new TrivialBillingListener(getApplication()));
-                setSetupResponse(null);
-                // strictly for demo purposes
-                TrivialBilling.updateSetup();
-                final TrivialView trivialView = (TrivialView) findViewById(R.id.trivial);
-                trivialView.updatePremium();
-                trivialView.updateSubscription();
-                trivialView.updateSkuDetails();
+                onInitButtonClicked(this);
+
             } else if (v == btnSetup) {
                 ASIab.setup();
             } else if (v == ctvAutoRecover) {
@@ -388,7 +370,7 @@ abstract class TrivialActivity extends AppCompatActivity
                 providers.removeAll(adapter.items);
                 final ProviderPickerDialogFragment dialogFragment = ProviderPickerDialogFragment
                         .getInstance(providers);
-                dialogFragment.setListener(TrivialActivity.this);
+                dialogFragment.setListener(BaseTrivialActivity.this);
                 dialogFragment.show(fragmentManager, FRAGMENT_PROVIDER_PICKER);
             }
         }
@@ -437,7 +419,7 @@ abstract class TrivialActivity extends AppCompatActivity
         private final LayoutInflater inflater;
 
         public HelpersAdapter() {
-            super(TrivialActivity.this, -1, Helper.values());
+            super(BaseTrivialActivity.this, -1, Helper.values());
             setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             inflater = getLayoutInflater();
         }
@@ -456,4 +438,6 @@ abstract class TrivialActivity extends AppCompatActivity
             return view;
         }
     }
+
+
 }

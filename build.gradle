@@ -2,10 +2,12 @@
 
 buildscript {
     repositories {
+        mavenLocal()
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.0'
+        classpath 'com.android.tools.build:gradle:2.3.3'
+        classpath 'com.appscatter.metrics:plugin:0.4.0-SNAPSHOT'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -15,13 +17,6 @@ buildscript {
 allprojects {
     repositories {
         mavenLocal()
-        maven {
-            credentials {
-                username 'deployment'
-                password 'tfyreF300jgvreK4TSHoGU7YQFmaL0Y'
-            }
-            url 'https://nexus.appscatter.tools/content/repositories/snapshots/'
-        }
         jcenter()
     }
 }

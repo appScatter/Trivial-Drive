@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.appscatter.sdk'
 
 android {
     compileSdkVersion 25
@@ -20,21 +21,16 @@ android {
         }
     }
 
-    signingConfigs {
-        releaseConfig {
-            storeFile file("../keys/trivial.keystore.jks")
-            storePassword "appscatter123"
-            keyAlias "trivial"
-            keyPassword "123appscatter"
-        }
-    }
-
     productFlavors {
         trivialdrive {
-
         }
         slideme {
             applicationId = "com.appscatter.hamburgerscatter"
+        }
+        autodrive {
+            applicationId 'com.appscatter.autodrive'
+        }
+        manualdrive {
         }
     }
 }
@@ -72,9 +68,6 @@ dependencies {
 
     // ASIab Aptoide
     compile 'com.appscatter.iab:aptoide:0.4.+@aar'
-
-    // ASIab SlideMe
-    compile 'com.appscatter.iab:slideme:0.4.+@aar'
 
     // UI - DragSortAdapter
     compile 'com.makeramen:dragsortadapter:1.3.0'
